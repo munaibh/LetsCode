@@ -1,0 +1,35 @@
+import java.awt.event.ActionListener;
+
+import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
+
+public class MainGUI implements ActionListener {
+	
+	private JFrame frame;
+
+	public MainGUI() {
+		
+		newElements();
+		addElements();
+		styleElements();
+		
+	}
+	
+	public void newElements() {
+		
+		
+	}
+	
+	public void addElements() {
+		
+		
+	}
+	
+	public void styleElements() {
+		
+	}
+
+}
