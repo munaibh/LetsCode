@@ -155,9 +155,6 @@ public class MainGUI implements ActionListener {
     	header.setBackground(Color.WHITE);
     	panel.setBackground(new Color(0xf8f8f8));
     	wrapper.setBackground(new Color(0,0,0,0));
-    	backnext.setBackground(new Color(0,0,0,0));
-    	controls.setBackground(new Color(0,0,0,0));
-    	settings.setBackground(new Color(0,0,0,0));
 		header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xeef1f1)));
 
 		
