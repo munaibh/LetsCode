@@ -1,0 +1,24 @@
+import java.sql.SQLException;
+
+
+public class LetsCode {
+
+	public static void main(String[] args) {
+	 	
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+//            	try {
+//					new MainGUI().run();
+//				} catch (SQLException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+            	
+            	
+            	new LoginGUI();
+            }
+        });
+		
+	}
+
+}

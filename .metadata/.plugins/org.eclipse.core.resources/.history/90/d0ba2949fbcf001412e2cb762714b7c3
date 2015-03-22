@@ -1,0 +1,462 @@
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
+import javax.swing.border.Border;
+import javax.swing.text.html.HTMLEditorKit;
+
+import com.mysql.jdbc.Statement;
+
+import net.miginfocom.swing.MigLayout;
+
+class Lesson extends JPanel implements ActionListener, ItemListener{
+
+    JButton buttonTwo;
+    CardLayout card;
+    JPanel content;
+    JScrollPane scroll;
+    JButton testSumbit;
+
+	ArrayList<JPanel> questions = new ArrayList<>();
+	ArrayList<String> answers = new ArrayList<>();
+	ArrayList<ButtonGroup>  qGroup  = new ArrayList<>();
+	ArrayList<JRadioButton> qChoice = new ArrayList<>();
+	JPanel testPanel = new JPanel(new MigLayout());
+
+	
+	public Lesson(final CardLayout card, JPanel content, String lang, ResultSet dbLesson) throws SQLException {
+        this.card = card;
+        this.content = content;
+
+      
+		Component[] components = content.getComponents();
+		
+		
+		scroll = new JScrollPane(this);
+		scroll.setHorizontalScrollBarPolicy(scroll.HORIZONTAL_SCROLLBAR_NEVER);
+		scroll.setBorder(null);
+		this.setLayout(new MigLayout("insets 0% 9%, wrap 3"));
+		
+
+		Connection conn = null;
+	    String getConn = "jdbc:mysql://localhost/programmingassistant";
+	    
+		try {
+				
+			Class.forName("com.mysql.jdbc.Driver");	        
+			conn = DriverManager.getConnection(getConn, "root", "");  
+		    
+		} catch (ClassNotFoundException | SQLException e) { 
+			e.printStackTrace(); 
+		}
+
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+			JEditorPane editorPane = new JEditorPane();
+			File file = new File("assets/lessons/" + dbLesson.getString("material"));
+	    	 
+			//System.out.println("LESSON!:"+ dbLesson.getString("lessonID"));
+			
+			
+			
+			try {
+	
+				editorPane.setPage(file.toURI().toURL());
+				editorPane.setEditable(false);
+				editorPane.setBackground(new Color(0,0,0,0));
+			
+			} catch (IOException e1) {
+				System.err.println("Bad URL: " + file);
+			}
+			
+			
+			
+			/*-- -----------------------
+			 	Get Lesson Questions
+			--------------------------*/
+			
+		    String query = "SELECT * FROM questions where lessonID ='" + dbLesson.getString("lessonID") +"' ORDER BY rand()";
+		    Statement statement = (Statement) conn.createStatement(); 
+		    ResultSet results = statement.executeQuery(query);
+	
+		    int qCount = 0;
+		    int cCount = 0;
+		    
+			while(results.next()) {
+				
+				answers.add(results.getString("questionAnswer"));
+				questions.add(new JPanel());
+				JPanel qCurrent = questions.get(qCount);
+				//qCurrent.setBackground(Color.RED);
+				qCurrent.setLayout(new MigLayout("wrap 1, align center"));
+				
+				qGroup.add(new ButtonGroup());
+				ButtonGroup gCurrent = qGroup.get(qCount);
+				
+				// Get Options Query
+				query = "SELECT * FROM options WHERE questionID='" + results.getString("questionID") + "' order by rand()";
+		    	statement = (Statement) conn.createStatement(); 
+		    	ResultSet rs = statement.executeQuery(query);
+		
+		    	// Question Title
+		    	JLabel qName = new JLabel(results.getString("questionName"));
+		    	qName.setFont(new Font("Lucida Grande",Font.PLAIN, 18));
+	
+				qCurrent.add(qName, "align center");
+		    	
+				while(rs.next()) {
+				
+					qChoice.add(new JRadioButton(rs.getString("optionsName")));
+			    	JRadioButton rCurrent = qChoice.get(cCount);
+			    	rCurrent.setFont(new Font("Lucida Grande",Font.PLAIN, 18));
+			    	rCurrent.setActionCommand(rs.getString("optionsName"));
+			    	gCurrent.add(rCurrent);
+					
+			    	rCurrent.setSelectedIcon(null);
+			    	
+			    	
+			    	qCurrent.add(rCurrent);
+			    	cCount++;
+	
+				}
+		    	
+		    	
+		    	
+		    	
+		    	
+		    	
+		    	
+		    	
+		    	
+		    	
+		    	
+				testPanel.add(qCurrent, "w 98%, wrap, gapy 20, top");
+				
+				qCount++;
+				
+			}
+			
+			
+			
+			
+			JButton submit = new JButton("submit");
+			submit.addActionListener(this);
+			
+			testPanel.add(submit);
+			
+			
+			
+			JButton nextButton = new JButton("next");
+			JButton prevButton = new JButton("previous");
+			
+			if(components.length>2) {
+				
+				testPanel.add(nextButton);
+
+				
+			}
+			
+			
+			nextButton.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					// TODO Auto-generated method stub
+					
+					card.next(content);
+				}
+				
+				
+				
+			});
+			
+				
+			
+			this.add(editorPane, "w 82%, wrap");
+	    	this.setBackground(new Color(0xf8f8f8));
+	    	
+	    	//testPanel.setBackground(Color.GREEN);
+	    	this.add(testPanel, "push, grow, h 500px, gap 0 0 80 0" );
+	    	
+			scroll.getVerticalScrollBar().setUnitIncrement(16);
+			content.add(scroll, dbLesson.getString("lessonName"));
+			
+			
+			
+			
+
+		
+    }
+
+
+	
+	
+	
+	
+	
+	
+	public void actionPerformed(ActionEvent e) {
+
+
+			Boolean answered = true;
+			
+			for(ButtonGroup current: qGroup) {					
+				if(current.getSelection() == null) {
+					answered = false;
+				}
+			}
+			
+			if(answered == true) {
+				
+				for(int i = 0; i < answers.size(); i++) {
+					
+					String myAnswer = qGroup.get(i).getSelection().getActionCommand();
+					String dbAnswer = answers.get(i);
+
+					
+					if(myAnswer.equals(dbAnswer)) {
+						System.out.println("correct");
+					}
+
+				}
+
+				
+			} else {
+				
+				JLabel msgLabel = new JLabel("Answer all the questions, you nincompoop.", JLabel.CENTER); 
+				JOptionPane.showMessageDialog (null, msgLabel, "", JOptionPane.PLAIN_MESSAGE);
+				
+			}
+			
+//			System.out.println(LoginGUI.id);
+		
+		
+		
+
+		
+		
+		
+		
+		
+		
+		} 
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	
+	
+
+	
+	
+	public void itemStateChanged(ItemEvent e) {
+	    if (e.getStateChange() == ItemEvent.SELECTED) {
+	        // Your selected code here.
+			
+	    	((AbstractButton) e.getSource()).setBorderPainted(true);
+
+	    	((JComponent) e.getSource()).setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Color.YELLOW));
+
+	    }
+	    else if (e.getStateChange() == ItemEvent.DESELECTED) {
+	        // Your deselected code here.
+	    	((AbstractButton) e.getSource()).setBorderPainted(false);
+	    	((AbstractButton) e.getSource()).setBorder(null);
+
+
+	    }
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	
+//
+//	
+//	
+//	
+//	ResultSet results = null;
+//	Connection conn = null;
+//    
+//	try {
+//			
+//		Class.forName("com.mysql.jdbc.Driver");	        
+//		conn = DriverManager.getConnection("jdbc:mysql://localhost/programmingassistant", "root", "");
+//	    String query = "SELECT * FROM questions order by rand() ";
+//	    Statement statement = (Statement) conn.createStatement(); 
+//	    results = statement.executeQuery(query);
+//	    
+//	} catch (ClassNotFoundException | SQLException e) { e.printStackTrace(); }
+//		
+//    	
+//    int panelCount = 0;
+//    int buttonCount = 0;
+//    while(results.next()) {
+//    
+//    	panel.add(new JPanel());
+//    	
+//    	JPanel currentPanel = panel.get(panelCount);
+//    	currentPanel.setLayout(new MigLayout(""));
+//    	//currentPanel.setBackground(Color.RED);
+//    		    	
+//    	group.add(new ButtonGroup());
+//    	ButtonGroup currentGroup = group.get(panelCount);
+//    	
+//    	answers.add(results.getString("questionAnswer"));
+//    	
+//    	ResultSet rs = null;
+//    	try {
+//			
+//    		String query = "SELECT * FROM options WHERE questionID='" + results.getString("questionID") + "' order by rand()";
+//	    	Statement statement = (Statement) conn.createStatement(); 
+//	    	rs = statement.executeQuery(query);
+//
+//		} catch (SQLException e) { e.printStackTrace(); }
+//
+//    	
+//    	JLabel qName = new JLabel(results.getString("questionName"));
+//    	qName.setFont(new Font("Lucida Grande",Font.PLAIN, 18));
+//
+//    	
+//    	currentPanel.add(qName, "wrap, push, align center, gapy 0 60");
+//
+//    	while(rs.next()) {
+//    		
+//    		radioButtons.add(new JRadioButton(rs.getString("optionsName")));
+//	    	JRadioButton rCurrent = radioButtons.get(buttonCount);
+//    		
+//	    	
+//	    	currentGroup.add(rCurrent);
+//    		
+//    		rCurrent.setActionCommand(rs.getString("optionsName"));
+//    		//rCurrent.setBackground(Color.GREEN);
+//    		currentPanel.add(rCurrent, "h 40px, push, align center, wrap");
+//    		rCurrent.addItemListener(this);
+////    		setIcon(...);
+////    		setSelectedIcon(...);
+//
+//    		rCurrent.setFont(new Font("Lucida Grande",Font.PLAIN, 18));
+//    		buttonCount++;
+//
+//    	}
+//    	
+//    	
+//	
+//    	
+//    
+//    	
+//    	
+//    	
+//    	testPanel.add(currentPanel, "width 90%, wrap, top, gapy 0 30");
+//    	panelCount++;
+//    	
+//    	
+//    }
+//    
+//	
+//	
+//    testSumbit = new JButton("press");
+//	testSumbit.addActionListener(this);
+//	
+//	testPanel.add(testSumbit, "w 40%, h 50px, align center, gapy 60");
+//	
+//	
+//
+//	this.add(testPanel, "push, grow, h 500px, gap 0 0 80 0");
+//
+//	content.add(scroll, "lesson 1");
+//	card.show(content, "lesson 1");
+//	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+}

@@ -1,0 +1,17 @@
+import java.sql.SQLException;
+
+
+public class LoginGUI {
+
+	public LoginGUI() {
+		
+		try {
+			new MainGUI().run();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+}

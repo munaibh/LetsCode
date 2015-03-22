@@ -1,0 +1,535 @@
+import java.awt.AlphaComposite;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Panel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Vector;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
+
+import net.miginfocom.swing.MigLayout;
+
+
+
+public class CopyOfTestGUI implements ActionListener, ItemListener {
+	
+	private JFrame frame;
+	
+	private JPanel panel;
+
+	String dbLesson;
+	static int retryCount;
+	JButton answers;
+	JButton submit;
+	JPanel content;
+	JButton retry;
+	ArrayList<JPanel> panel2 = new ArrayList<>();
+	ArrayList<String> questions = new ArrayList<>();
+	ArrayList<String> answers2 = new ArrayList<>();
+	ArrayList<ButtonGroup>  qGroup  = new ArrayList<>();
+	ArrayList<JComponent> qChoice = new ArrayList<>();
+	JPanel testPanel = new JPanel(new MigLayout());
+	
+	
+	
+	
+	
+	
+	
+	CardLayout card = new CardLayout();
+	
+	public CopyOfTestGUI(String currentLesson) {
+		this.dbLesson = currentLesson;
+	}
+	
+	public void run() throws SQLException {
+		
+		newElements();
+		styleElements();
+		addElements();
+		
+	}
+	
+	
+	public void newElements() throws SQLException {
+		
+		frame = new JFrame();
+		panel = new JPanel();
+
+
+    	panel.setLayout(new MigLayout("insets 0 10, align center"));
+    
+    	content = new JPanel();
+    	content.setLayout(card);
+    	content.setBackground(Color.GREEN);
+    	
+    	JPanel qPanel = new JPanel();
+    	qPanel.setLayout(new MigLayout(""));
+    	//qPanel.setBackground(Color.YELLOW);
+    	
+    	
+    	Connection conn = null;
+	    String getConn = "jdbc:mysql://localhost/programmingassistant";
+	    
+		try {
+				
+			Class.forName("com.mysql.jdbc.Driver");	        
+			conn = DriverManager.getConnection(getConn, "root", "");  
+		    
+		} catch (ClassNotFoundException | SQLException e) { 
+			e.printStackTrace(); 
+		}
+    	
+    	/*-- -----------------------
+	 	Get Lesson Questions
+	--------------------------*/
+	
+    String query = "SELECT * FROM questions where lessonID ='" + dbLesson +"' ORDER BY rand()";
+    Statement statement = (Statement) conn.createStatement(); 
+    ResultSet results = statement.executeQuery(query);
+
+    int qCount = 0;
+    int cCount = 0;
+    
+	while(results.next()) {
+		
+		questions.add(results.getString("questionName"));
+		answers2.add(results.getString("questionAnswer"));
+		panel2.add(new JPanel());
+		panel2.get(qCount).setBackground(new Color(0,0,0,0));
+
+		JPanel qCurrent = panel2.get(qCount);
+		//qCurrent.setBackground(Color.RED);
+		qCurrent.setLayout(new MigLayout("insets 0, wrap 1"));
+		
+		qGroup.add(new ButtonGroup());
+		ButtonGroup gCurrent = qGroup.get(qCount);
+		
+		// Get Options Query
+		query = "SELECT * FROM options WHERE questionID='" + results.getString("questionID") + "' order by rand()";
+    	statement = (Statement) conn.createStatement(); 
+    	ResultSet rs = statement.executeQuery(query);
+
+    	// Question Title
+    	JLabel qName = new JLabel("<html><center>"+results.getString("questionName")+"</center></html>", SwingConstants.CENTER);
+    	
+    
+    	qName.setFont(new Font("Lucida Grande",Font.BOLD, 15));
+
+		qCurrent.add(qName, "push, wmax 96%, align center, gap 10 10 20 20");
+    	
+		
+		
+		
+		
+		int rowcount = 0;
+		if (rs.last()) {
+		  rowcount = rs.getRow();
+		  rs.beforeFirst(); // not rs.first() because the rs.next() below will move on, missing the first element
+		}
+		
+		//System.out.println(rowcount);
+		
+		
+			while(rs.next()) {
+			
+				qChoice.add(new JRadioButton(rs.getString("optionsName")));
+		    	JRadioButton rCurrent = (JRadioButton) qChoice.get(cCount);
+		    	rCurrent.setFont(new Font("Lucida Grande",Font.BOLD, 14));
+		    	rCurrent.setActionCommand(rs.getString("optionsName"));
+		    	gCurrent.add(rCurrent);
+		
+		    	rCurrent.setVerticalTextPosition(JRadioButton.BOTTOM);
+		    	rCurrent.setHorizontalTextPosition(JRadioButton.CENTER);
+
+	            rCurrent.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+		    	ImageIcon logoImage = null;
+		    	try {
+	    			Image image = ImageIO.read(new File("assets/img/FF4D00-0.png"));
+	    			Image  resized  = image.getScaledInstance(300, 1,Image.SCALE_SMOOTH);
+	    			logoImage = new ImageIcon(resized);
+	  		
+	    		} catch (IOException k) { k.printStackTrace(); }
+
+		    	
+
+		    	rCurrent.setIcon(logoImage);		    	
+		    	
+		    	rCurrent.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(0xcccccc)));
+		    	rCurrent.setBorderPainted(true);
+		    	rCurrent.addItemListener(this);
+		    	rCurrent.setBackground(new Color(0xFFFFFF));
+		    	qCurrent.add(rCurrent, "align center, h 58px, gapy 0 10");
+		    	cCount++;
+	
+			}
+		
+		
+	    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	qPanel.setBackground(new Color(0,0,0,0));
+		qPanel.add(qCurrent, "w 96%, wrap, gapy 20, top");
+		
+		qCount++;
+		
+	}   	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	JPanel aPanel = new JPanel();
+    	aPanel.setLayout(new MigLayout("h 3000px"));
+    	
+    
+    	JScrollPane scroll1 = new JScrollPane(qPanel);
+    	JScrollPane scroll2 = new JScrollPane(aPanel);
+
+    	
+    	scroll1.setBackground(new Color(0,0,0,0));
+    	scroll2.setBackground(new Color(0,0,0,0));
+    	scroll1.setBorder(null);
+    	
+    	content.add(scroll1, "scroll1");
+    	content.add(scroll2, "scroll2");
+    	
+    	card.show(content, "scroll1");
+		
+		
+		
+		
+		
+		
+		
+		
+    	panel.add(content, "push, grow, wrap");
+		
+		
+	}
+	
+	
+	public void addElements() {
+		
+		ComponentResizer cr = new ComponentResizer();
+		cr.registerComponent(frame);
+		cr.setSnapSize(new Dimension(10, 10));
+
+		ComponentDraggable cd = new ComponentDraggable();
+		cd.setDraggable(panel, frame);
+		
+    	
+    	
+		
+		submit = new JButton("SUBMIT");
+		
+		retry = new JButton("RETRY");
+		
+		answers = new JButton("ANSWERS");
+		
+		Border emptyBorder = BorderFactory.createEmptyBorder();
+		submit.setOpaque(true);
+		submit.setBorder(emptyBorder);
+		submit.setBackground(new Color(0xe95e59));
+		submit.setForeground(Color.WHITE);
+		submit.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+		retry.setOpaque(true);
+		retry.setBorder(emptyBorder);
+		retry.setBackground(new Color(0xe95e59));
+		retry.setForeground(Color.WHITE);
+		retry.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+		answers.setOpaque(true);
+		answers.setBorder(emptyBorder);
+		answers.setBackground(new Color(0xe95e59));
+		answers.setForeground(Color.WHITE);
+		answers.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		answers.setVisible(false);
+		retry.addActionListener(this);
+		answers.addActionListener(this);
+		submit.addActionListener(this);
+		
+		
+		panel.add(submit,  "growx, hmin 40px, gap 20 10 10 10, split 3");
+		panel.add(answers,   "growx, hmin 40px, gap 10 20 10 10");
+		panel.add(retry,   "growx, hmin 40px, gap 10 10 10 10");
+	//	panel.add(answers, "growx, h 55px");
+
+	
+
+		frame.setUndecorated(true);
+		frame.setContentPane(new ShadowPane());
+        frame.setBackground(new Color(0,0,0,0)); 
+		frame.add(panel);
+		frame.setSize(400, 600);
+		frame.setLocationRelativeTo(null);
+		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		frame.setVisible(true);
+		
+	}
+	
+	
+	public void styleElements() {
+		
+		// Add Logo Icon
+	
+    	ArrayList<String> controlsIcons = new ArrayList<>();
+    	controlsIcons.add("assets/img/exitIcon.png");
+    	controlsIcons.add("assets/img/miniIcon.png");
+    	controlsIcons.add("assets/img/maxiIcon.png");
+    	controlsIcons.add("assets/img/settingsIcon.png");
+    	
+    	int controlsCount = 0;
+
+		
+		
+    	panel.setBackground(new Color(0xf8f8f8));
+    
+	}
+
+	
+	public void actionPerformed(ActionEvent e) {
+		
+		if(e.getSource() == retry) {
+			
+			frame.dispose();
+			try {
+				new CopyOfTestGUI(dbLesson).run();
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			
+			
+		}
+		// if(e.getSource() == answers) card.show(content, "scroll2");
+		 if(e.getSource() == submit) card.show(content, "scroll1");
+
+		 if(e.getSource() == submit) {
+				 
+			 
+			 
+			 
+				retryCount++;
+System.out.println(retryCount);
+			 
+			 if(retryCount > 2) {
+				 answers.setVisible(true);
+				 System.out.println(retryCount);
+				 panel.repaint();
+				 panel.revalidate();
+			 }
+				
+
+			 
+			 
+			 Boolean answered = true;
+				
+				for(ButtonGroup current: qGroup) {					
+					if(current.getSelection() == null) {
+						answered = false;
+					}
+				}
+				
+				if(answered == true) {
+					
+					for(int i = 0; i < answers2.size(); i++) {
+						
+	//					if(qChoice.get(i) instanceof JTextField) {
+	//						
+	//					}
+						String myAnswer = qGroup.get(i).getSelection().getActionCommand();
+						String dbAnswer = answers2.get(i);
+	
+						if(myAnswer.equals(dbAnswer)) {
+							
+//							System.out.println("----------------------");
+//							System.out.println("Q: " + questions.get(i));
+//							System.out.println("A: " + myAnswer);
+//							System.out.println("Status: Correct");
+//							System.out.println("----------------------");
+//							
+//							//panel2.get(i).setBackground(Color.GREEN);
+//							panel2.get(i).repaint();
+//							panel2.get(i).revalidate();
+//							
+							Enumeration<AbstractButton> test = (Enumeration<AbstractButton>) qGroup.get(i).getSelection();
+							
+							
+							
+						} else {
+//							//panel2.get(i).setBackground(Color.RED);
+//							panel2.get(i).repaint();
+//							panel2.get(i).revalidate();
+//							
+//							System.out.println("----------------------");
+//							System.out.println("Q: " + questions.get(i));
+//							System.out.println("A: " + answers2.get(i));
+//							System.out.println("Status: INCORRECT");
+//							System.out.println("Shouldve Been:" + dbAnswer);
+//							System.out.println("----------------------");
+						}
+	
+					}
+	
+					
+					
+				} else {
+					
+					JLabel msgLabel = new JLabel("Answer all the questions, you nincompoop.", JLabel.CENTER); 
+					JOptionPane.showMessageDialog (null, msgLabel, "", JOptionPane.PLAIN_MESSAGE);
+					
+				}
+	
+			  
+		 }
+		 
+		 
+		 if(e.getSource() == answers) {
+			 
+			 for(int i = 0; i < qGroup.size(); i++) {
+				 
+					Enumeration<AbstractButton> test = qGroup.get(i).getElements();
+
+					while(test.hasMoreElements()) {
+						
+						AbstractButton current = test.nextElement();
+				//	System.out.println(answers2.get(i));
+						if(answers2.get(i).equals(current.getActionCommand()) )
+					    current.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Color.GREEN));
+						//panel2.get(i).setBackground(Color.RED);
+						panel2.get(i).repaint();
+						panel2.get(i).revalidate();
+					}
+			 }
+			 
+		 }
+		  
+		  
+		  
+	}
+	
+	
+	public class ShadowPane extends JPanel {
+
+		public ShadowPane() {
+			setLayout(new BorderLayout());
+	        setOpaque(false);
+	        setBackground(Color.BLACK);
+	        setBorder(new EmptyBorder(12, 12, 2, 2));
+	    }
+
+	    public Dimension getPreferredSize() {
+	    	return new Dimension(200, 200);
+	    }
+
+	    protected void paintComponent(Graphics g) {
+	    	super.paintComponent(g);
+	    	Graphics2D g2d = (Graphics2D) g.create();
+	    	g2d.setComposite(AlphaComposite.SrcOver.derive(0.2f));
+	    	g2d.fillRect(10, 10, getWidth(), getHeight());
+	    	g2d.dispose();
+	    }
+	  
+	}
+
+
+	public void itemStateChanged(ItemEvent e) {
+	    if (e.getStateChange() == ItemEvent.SELECTED) {
+	        // Your selected code here.
+			
+	    	((JComponent) e.getSource()).setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(0x000000)));
+	    	
+
+	    }
+	    else if (e.getStateChange() == ItemEvent.DESELECTED) {
+	        // Your deselected code here.
+	    	((JComponent) e.getSource()).setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(0xcccccc)));
+
+
+
+
+	    }
+	}
+	
+	
+	
+	
+	
+
+}

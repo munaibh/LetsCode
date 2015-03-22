@@ -1,20 +1,26 @@
 import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -22,12 +28,16 @@ import net.miginfocom.swing.MigLayout;
 
 public class MainGUI implements ActionListener {
 	
-	private JFrame frame;
+	static JFrame frame;
 	private JLabel logo;
-	private JPanel panel, header, wrapper, backnext, settings, controls;
-	private JButton exitBtn, miniBtn, maxiBtn, nextBtn, backBtn, settBtn;
+	private JPanel panel, header, wrapper, content, backnext, settings, controls;
+	private JButton exitBtn, miniBtn, maxiBtn, settBtn;
 
-	public MainGUI() {
+	static JButton nextBtn, backBtn;
+	
+	CardLayout card = new CardLayout();
+	
+	public void run() throws SQLException {
 		
 		newElements();
 		styleElements();
@@ -36,10 +46,11 @@ public class MainGUI implements ActionListener {
 	}
 	
 	
-	public void newElements() {
+	public void newElements() throws SQLException {
 		
 		frame = new JFrame();
 		panel = new JPanel();
+		content = new JPanel();
 		
     	header   = new JPanel();
 		wrapper  = new JPanel();
@@ -56,20 +67,44 @@ public class MainGUI implements ActionListener {
     	
     	exitBtn.addActionListener(this);
     	miniBtn.addActionListener(this);
+    	nextBtn.addActionListener(this);
+    	backBtn.addActionListener(this);
     	
+		content.setLayout(card);
     	panel.setLayout(new MigLayout("insets 0"));
     	header.setLayout(new MigLayout("insets 15, gap 0"));
     	backnext.setLayout(new MigLayout("insets 0, gap 0"));
+    	wrapper.setLayout(new MigLayout("insets 0, gap 0"));
     	controls.setLayout(new MigLayout("insets 0, gap 0"));
     	settings.setLayout(new MigLayout("insets 0, gap 0"));
 
+    	
+    	Language lang = new Language(card, content);
+ 
+		
+		
+		
+		
+		
 		
 	}
 	
 	
 	public void addElements() {
 		
+		ComponentResizer cr = new ComponentResizer();
+		cr.registerComponent(frame);
+		cr.setSnapSize(new Dimension(10, 10));
+
+		ComponentDraggable cd = new ComponentDraggable();
+		cd.setDraggable(header, frame);
 		
+    	
+    	
+		
+		
+		wrapper.add(content, "push, grow");
+
 		backnext.add(backBtn);
     	backnext.add(nextBtn);
  
@@ -85,11 +120,10 @@ public class MainGUI implements ActionListener {
 		
     	panel.add(header, "growx, hmax 90px, top, wrap");
 		panel.add(wrapper, "push, grow, top");
-
-		
 		panel.add(header, "growx, hmax 90px, top, wrap");
 		panel.add(wrapper, "push, grow, top");
 		
+
 		frame.setUndecorated(true);
 		frame.setContentPane(new ShadowPane());
         frame.setBackground(new Color(0,0,0,0)); 
@@ -148,13 +182,41 @@ public class MainGUI implements ActionListener {
 			} catch (IOException ex) { }
 		
 		}
+		
+		// Add Back/Next Icons
+		
+		try {
+    		
+			Image image  = ImageIO.read(new File("assets/img/backIcon.png"));
+			Image resize = image.getScaledInstance(40, 40,Image.SCALE_SMOOTH);
+			Border noBorder = BorderFactory.createEmptyBorder(0,10,0,0);
+			backBtn.setBorder(noBorder);
+			backBtn.setBorderPainted(false);
+			backBtn.setContentAreaFilled(false);
+			backBtn.setFocusPainted(false);
+			backBtn.setIcon(new ImageIcon(resize));
 
+    	} catch (IOException ex) { }
     	
+
+    	try {
+    		
+			Image image  = ImageIO.read(new File("assets/img/nextIcon.png"));
+			Image resize = image.getScaledInstance(40, 40,Image.SCALE_SMOOTH);
+			Border noBorder = BorderFactory.createEmptyBorder(0,0,0,0);
+			nextBtn.setBorder(noBorder);
+			nextBtn.setBorderPainted(false);
+			nextBtn.setContentAreaFilled(false);
+			nextBtn.setFocusPainted(false);
+			nextBtn.setIcon(new ImageIcon(resize));
+
+    	} catch (IOException ex) { }
     	
     	
     	header.setBackground(Color.WHITE);
     	panel.setBackground(new Color(0xf8f8f8));
     	wrapper.setBackground(new Color(0,0,0,0));
+    	content.setBackground(new Color(0,0,0,0));
     	backnext.setBackground(new Color(0,0,0,0));
     	controls.setBackground(new Color(0,0,0,0));
     	settings.setBackground(new Color(0,0,0,0));
@@ -169,7 +231,9 @@ public class MainGUI implements ActionListener {
 		  JButton source = (JButton) e.getSource();
 		  if(source == exitBtn) System.exit(0);
 		  if(source == miniBtn) frame.setState(JFrame.ICONIFIED);
-		  
+		  if(source == backBtn) card.previous(content);
+		  if(source == nextBtn) card.next(content);
+
 	}
 	
 	
@@ -195,5 +259,9 @@ public class MainGUI implements ActionListener {
 	    }
 	  
 	}
+	
+	
+	
+	
 
 }
